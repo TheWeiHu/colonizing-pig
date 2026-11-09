@@ -7,6 +7,7 @@
   <meta name="description" content="Play Colonizing Pig, a self-play-trained island-building bot. The full model runs privately in your browser.">
   <title>Colonizing Pig</title>
   <link rel="icon" href="pig.svg" type="image/svg+xml">
+  <link rel="preload" href="nunito-sans.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
   <script src="app.js" defer></script>
 </head>
@@ -17,9 +18,9 @@
   </header>
   <main>
     <section id="welcome" class="welcome">
-      <span class="eyebrow">An Island. A Rival. Fifteen Points.</span>
+      <img class="hero-pig" src="pig-island.png" width="1280" height="1280" alt="A pink pig holding a settlement on its little island">
       <h1>Play The Pig.</h1>
-      <p>Build settlements, trade resources, and race a self-play-trained bot to 15 points.</p>
+      <p>Build an island. Beat the pig. First to 15 wins.</p>
       <form id="start-form">
         <button class="primary" id="start" disabled>Loading Model…</button>
       </form>
@@ -28,15 +29,15 @@
     </section>
     <section id="game" hidden aria-label="Game">
       <div class="scoreboard">
-        <div class="score you"><span><i class="player-dot"></i>You</span><strong id="you-score">0</strong><small>of 15</small></div>
-        <div class="versus"><img src="pig.svg" width="36" height="36" alt=""><span id="round">Opening</span></div>
-        <div class="score pig"><span><i class="player-diamond"></i>The Pig</span><strong id="pig-score">0</strong><small>of 15</small></div>
+        <div class="score you"><span><i class="player-dot"></i>You</span><strong id="you-score">0</strong></div>
+        <div class="versus"><span id="round">Opening</span><span>First To 15</span></div>
+        <div class="score pig"><span><i class="player-diamond"></i>The Pig</span><strong id="pig-score">0</strong></div>
       </div>
-      <div class="status-line"><h1 id="status" role="status" aria-live="polite">Place A Settlement</h1><span id="dice" aria-label="Last dice roll">—</span></div>
+      <div class="status-line"><h1 id="status" role="status" aria-live="polite">Place A Settlement</h1><span id="dice" aria-label="Last dice roll">—</span><button id="pause" class="quiet" type="button">Pause</button></div>
       <p id="hint" class="hint">Choose a highlighted corner.</p>
       <div class="board-wrap" id="board-wrap"><svg id="board" viewBox="-280 -240 560 480" role="group" aria-label="Game board"></svg></div>
-      <div class="board-tools"><button id="zoom" class="quiet" type="button" aria-pressed="false">Zoom Board</button><span id="last-think"></span><button id="pause" class="quiet" type="button">Pause</button></div>
-      <section class="hand-panel" aria-label="Your resources"><h2>Your Hand</h2><div id="hand" class="hand"></div><div id="dev-hand" class="dev-hand"></div></section>
+      <div class="board-tools"><button id="zoom" class="quiet" type="button" aria-pressed="false">Zoom Board</button><span id="last-think"></span></div>
+      <section class="hand-panel" aria-label="Your resources"><h2 class="sr-only">Your Hand</h2><div id="hand" class="hand"></div><div id="dev-hand" class="dev-hand"></div></section>
       <div id="actions" class="actions" aria-label="Available actions"></div>
       <div id="choice" class="choice"></div>
       <div class="secondary"><button id="new-game" type="button" class="quiet">New Game</button><span id="save-status">Saved On This Device</span><div><button class="quiet load-file" type="button">Load File</button><button id="export" type="button" class="quiet">Save File</button></div></div>
@@ -44,21 +45,8 @@
       <details class="game-details"><summary>Recent Moves</summary><ol id="log" reversed></ol></details>
     </section>
     <div id="error" role="alert" hidden><p id="error-message"></p><button id="retry" type="button">Retry / Restore Game</button><button id="discard-save" class="quiet" type="button">Start Fresh</button></div>
-    <details class="about"><summary>How To Play</summary><div class="prose">
-      <p>Two players race to <b>15 victory points</b>. Starting order is randomly assigned. Place two starting settlements, each followed by a road. The player who places second gets both middle placements. You receive resources beside your second settlement.</p>
-      <p>Roll the dice to produce resources. Settlements earn one card from neighboring matching tiles; cities earn two. Trade with the bank, build roads and settlements, upgrade cities, or buy development cards. The robber blocks its tile.</p>
-      <ul><li>Road: 1 lumber + 1 brick.</li><li>Settlement: 1 lumber + 1 brick + 1 wool + 1 grain. Worth 1 point.</li><li>City: 2 grain + 3 ore. Worth 2 points.</li><li>Development card: 1 wool + 1 grain + 1 ore. Newly bought cards become playable next turn.</li></ul>
-      <p>Longest Road and Largest Army are worth 2 points each. On a seven, a hand above 9 cards discards half, rounded down. The friendly robber protects a player below 3 public points. Balanced dice and bank/port trades follow the two-player engine rules; there is no player-to-player trading.</p>
-      <p>Resource hands are trackable in two-player play and shown in Game Details. The bot's development cards remain hidden. For small screens, Zoom Board enlarges the targets; scroll to reach the edges.</p>
-    </div></details>
-    <details class="about"><summary>About The Bot</summary><div class="prose">
-      <p><b>porto-ruling</b> is the champion of our one-minute leaderboard. It learns from self-play and searches possible turns. This page keeps its full search settings; slower devices take longer, without quietly switching to a weaker bot.</p>
-      <p>No account, server inference, analytics, or API key. Your game is saved in this browser. A private worker runs the engine so the page stays responsive. Threads are used where supported.</p>
-      <p>Wei reports that this is currently the top bot on Colonist.io (November 9, 2026). The Oversized Pigs profile link will be added before public launch. This is an independent project, not affiliated with Colonist or the game publishers.</p>
-      <p><a href="https://x.com/_weihu_" target="_blank" rel="noopener">Follow Wei On X ↗</a> · <a href="https://weihu.ca" target="_blank" rel="noopener">weihu.ca ↗</a></p>
-    </div></details>
   </main>
-  <footer><span>Full Search. Your Device.</span><a href="https://github.com/TheWeiHu/colonizing-pig#run-locally" target="_blank" rel="noopener">Run Locally ↗</a></footer>
+  <footer><a href="https://x.com/_weihu_" target="_blank" rel="noopener">Updates On X ↗</a><span>Runs On Your Device</span><a href="https://github.com/TheWeiHu/colonizing-pig#run-locally" target="_blank" rel="noopener">Run Locally ↗</a></footer>
   <dialog id="new-dialog"><form method="dialog"><h2>Start A New Game?</h2><p>Your current game will be replaced. Save a file first if you want to keep it.</p><div class="actions"><button value="cancel">Keep Playing</button><button class="primary" value="new">New Game</button></div></form></dialog>
   <input id="load-file" type="file" accept="application/json,.json" hidden>
   <noscript>This game needs JavaScript and WebAssembly. Enable JavaScript, or download the source to run it locally.</noscript>
