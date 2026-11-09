@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#1768b2">
-  <meta name="description" content="Play Colonizing Pig, a self-play-trained island-building bot. The full model runs privately in your browser.">
-  <title>Colonizing Pig</title>
+  <meta name="description" content="Play Oversized Pig, a self-play-trained island-building bot. The full model runs privately in your browser.">
+  <title>Oversized Pig</title>
   <link rel="icon" href="pig.svg" type="image/svg+xml">
   <link rel="preload" href="nunito-sans.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
@@ -13,25 +13,33 @@
 </head>
 <body>
   <header>
-    <a class="brand" href="./"><img src="pig.svg" width="30" height="30" alt=""><span>Colonizing Pig</span></a>
+    <a class="brand" href="./"><img src="pig.svg" width="30" height="30" alt=""><span>Oversized Pig</span></a>
     <nav aria-label="Links"><a href="https://weihu.ca" target="_blank" rel="noopener">Wei Hu ↗</a><a href="https://github.com/TheWeiHu/colonizing-pig" target="_blank" rel="noopener">Source ↗</a></nav>
   </header>
   <main>
     <section id="welcome" class="welcome">
-      <img class="hero-pig" src="pig-island.png" width="1280" height="1280" alt="A pink pig holding a settlement on its little island">
-      <h1>Play The Pig.</h1>
-      <p>Build an island. Beat the pig. First to 15 wins.</p>
+      <img class="hero-pig" src="pig-island.png" width="1280" height="1280" alt="An enormous round pig towering over a tiny island and holding a settlement">
+      <h1>Beat The<br>Oversized Pig.</h1>
+      <p class="ranking-headline"><strong>#1 Global</strong> On Colonist 1v1</p>
+      <p>Build your island. Take on the top-ranked pig.</p>
       <form id="start-form">
         <button class="primary" id="start" disabled>Loading Model…</button>
       </form>
       <p id="load-status" role="status">Loading ~4.6 MB. The bot runs entirely on your device.</p>
       <button class="quiet load-file" type="button">Load Saved Game</button>
+      <section class="ranking-proof" aria-label="Ranking screenshots">
+        <div class="ranking-images">
+          <figure><a href="leaderboard-2026-11-09.jpg" target="_blank" rel="noopener"><img src="leaderboard-2026-11-09.jpg" width="1170" height="1704" loading="lazy" alt="Colonist global 1v1 leaderboard with oversizedpig ranked first at rating 2533"></a><figcaption>Global Leaderboard · 2533 Rating</figcaption></figure>
+          <figure><a href="profile-2026-11-09.png" target="_blank" rel="noopener"><img src="profile-2026-11-09.png" width="1535" height="1632" loading="lazy" alt="oversizedpig’s Colonist profile: global 1v1 rank 1, rating 2552, 313 games, 62.9 percent wins"></a><figcaption>1v1 Profile · 2552 Rating · 62.9% Wins</figcaption></figure>
+        </div>
+        <p>Snapshots provided November 9, 2026, at different ratings. Rankings change over time. Open either image to view it full-size.</p>
+      </section>
     </section>
     <section id="game" hidden aria-label="Game">
       <div class="scoreboard">
         <div class="score you"><span><i class="player-dot"></i>You</span><strong id="you-score">0</strong></div>
         <div class="versus"><span id="round">Opening</span><span>First To 15</span></div>
-        <div class="score pig"><span><i class="player-diamond"></i>The Pig</span><strong id="pig-score">0</strong></div>
+        <div class="score pig"><span><i class="player-diamond"></i>Oversized Pig</span><strong id="pig-score">0</strong></div>
       </div>
       <div class="status-line"><h1 id="status" role="status" aria-live="polite">Place A Settlement</h1><span id="dice" aria-label="Last dice roll">—</span><button id="pause" class="quiet" type="button">Pause</button></div>
       <p id="hint" class="hint">Choose a highlighted corner.</p>
@@ -41,13 +49,18 @@
       <div id="actions" class="actions" aria-label="Available actions"></div>
       <div id="choice" class="choice"></div>
       <div class="secondary"><button id="new-game" type="button" class="quiet">New Game</button><span id="save-status">Saved On This Device</span><div><button class="quiet load-file" type="button">Load File</button><button id="export" type="button" class="quiet">Save File</button></div></div>
-      <details class="game-details"><summary>Game Details</summary><div id="opponent"></div><div id="awards"></div><div id="bank"></div></details>
+      <details class="game-details"><summary>Game Details</summary>
+        <table class="resource-table"><caption>Resources</caption><thead><tr><th scope="col"><span class="sr-only">Supply</span></th><th scope="col"><img src="wood.svg" width="26" height="26" alt=""><span>Lumber</span></th><th scope="col"><img src="brick.svg" width="26" height="26" alt=""><span>Brick</span></th><th scope="col"><img src="wool.svg" width="26" height="26" alt=""><span>Wool</span></th><th scope="col"><img src="grain.svg" width="26" height="26" alt=""><span>Grain</span></th><th scope="col"><img src="ore.svg" width="26" height="26" alt=""><span>Ore</span></th></tr></thead><tbody><tr id="opponent"></tr><tr id="bank"></tr></tbody></table>
+        <p class="hidden-cards"><span>Oversized Pig’s Development Cards</span><span><b id="opponent-dev">0</b> Hidden</span></p>
+        <table class="awards-table"><caption>Bonuses</caption><thead><tr><th scope="col">Bonus</th><th scope="col">Held By</th><th scope="col">You</th><th scope="col">Pig</th></tr></thead><tbody><tr id="longest-road"></tr><tr id="largest-army"></tr></tbody></table>
+      </details>
       <details class="game-details"><summary>Recent Moves</summary><ol id="log" reversed></ol></details>
     </section>
     <div id="error" role="alert" hidden><p id="error-message"></p><button id="retry" type="button">Retry / Restore Game</button><button id="discard-save" class="quiet" type="button">Start Fresh</button></div>
   </main>
   <footer><a href="https://x.com/_weihu_" target="_blank" rel="noopener">Updates On X ↗</a><span>Runs On Your Device</span><a href="https://github.com/TheWeiHu/colonizing-pig#run-locally" target="_blank" rel="noopener">Run Locally ↗</a></footer>
   <dialog id="new-dialog"><form method="dialog"><h2>Start A New Game?</h2><p>Your current game will be replaced. Save a file first if you want to keep it.</p><div class="actions"><button value="cancel">Keep Playing</button><button class="primary" value="new">New Game</button></div></form></dialog>
+
   <input id="load-file" type="file" accept="application/json,.json" hidden>
   <noscript>This game needs JavaScript and WebAssembly. Enable JavaScript, or download the source to run it locally.</noscript>
 </body>

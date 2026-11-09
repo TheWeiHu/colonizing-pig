@@ -2,8 +2,7 @@
 const $ = id => document.getElementById(id);
 const RES = ['Lumber', 'Brick', 'Wool', 'Grain', 'Ore'];
 const ICONS = ['wood', 'brick', 'wool', 'grain', 'ore'];
-const palette = getComputedStyle(document.documentElement);
-const COLORS = ['wood','brick','wool','grain','ore'].map(name => palette.getPropertyValue(`--${name}`).trim());
+const COLORS = ICONS.map(name => `var(--${name})`);
 const DEV = ['Knight', 'Victory Point', 'Road Building', 'Year Of Plenty', 'Monopoly'];
 const LAND = [[0,-2],[1,-2],[2,-2],[2,-1],[2,0],[1,1],[0,2],[-1,2],[-2,2],[-2,1],[-2,0],[-1,-1],[0,-1],[1,-1],[1,0],[0,1],[-1,1],[-1,0],[0,0]];
 const PAIRS = RES.flatMap((_, a) => RES.slice(a).map((_, b) => [a, a+b]));
@@ -42,7 +41,7 @@ function boot(saved = null) {
   worker?.terminate(); clearTimeout(loadTimer); const epoch = ++generation;
   ready = false; busy = true; stopTimer(); restoreOnReady = saved;
   $('start').disabled = true; $('start').textContent = 'Loading Model…';
-  $('load-status').textContent = 'Getting The Pig Ready…';
+  $('load-status').textContent = 'Getting Oversized Pig Ready…';
   $('error').hidden = true;
   const threaded = !forcedSingle && self.crossOriginIsolated && typeof SharedArrayBuffer !== 'undefined';
   worker = new Worker('worker.js');
@@ -93,7 +92,7 @@ function think() {
   $('game').classList.add('thinking'); render();
   timer = setInterval(() => {
     const elapsed = (performance.now()-startTime)/1000;
-    $('status').textContent = `Pig Is Thinking · ${elapsed.toFixed(0)}s`;
+    $('status').textContent = `Thinking · ${elapsed.toFixed(0)}s`;
     $('hint').textContent = elapsed > 15 ? 'Full search is still running. You can pause without losing your game.' : 'Planning its next move…';
   }, 500);
   send('bot');
@@ -115,9 +114,9 @@ function render() {
   $('dice').textContent = state.roll || '—';
   $('pause').textContent = paused ? 'Resume' : 'Pause'; $('pause').disabled = state.done;
   let title = 'Your Turn', hint = 'Build, trade, or end your turn.';
-  if (state.done) { title = state.winner < 0 ? 'Game Drawn' : state.winner === state.human ? 'You Win!' : 'The Pig Wins'; hint = state.winner < 0 ? 'The move limit was reached.' : 'Fifteen points. Another island awaits.'; }
+  if (state.done) { title = state.winner < 0 ? 'Game Drawn' : state.winner === state.human ? 'You Win!' : 'Oversized Pig Wins'; hint = state.winner < 0 ? 'The move limit was reached.' : 'Fifteen points. Another island awaits.'; }
   else if (paused) { title = 'Game Paused'; hint = 'Resume whenever you are ready.'; }
-  else if (busy && state.current !== state.human) { title = 'Pig Is Thinking'; hint = 'Planning its next move…'; }
+  else if (busy && state.current !== state.human) { title = 'Thinking…'; hint = 'Planning its next move…'; }
   else if (busy) { title = 'Applying Your Move'; hint = 'One moment…'; }
   else if (state.phase === 0) { title = 'Place A Settlement'; hint = 'Choose a highlighted corner. Numbers with more dots produce more often.'; }
   else if ([1,9].includes(state.phase)) { title = 'Place A Road'; hint = 'Choose a highlighted edge.'; }
@@ -135,10 +134,15 @@ function render() {
     const label = document.createElement('span'); label.textContent = name; div.append(icon,count,label); return div;
   }));
   $('dev-hand').textContent = me.dev.map((count,i) => count ? `${DEV[i]} ${count}${me.bought[i] ? ` (${me.bought[i]} New)` : ''}` : '').filter(Boolean).join(' · ') || '';
-  $('opponent').textContent = `Pig's Resources: ${RES.map((r,i)=>`${r} ${rival.hand[i]}`).join(' · ')} · Hidden Development Cards: ${rival.devCount}`;
+  const row = (id, label, values) => {
+    const heading = document.createElement('th'); heading.scope = 'row'; heading.textContent = label;
+    $(id).replaceChildren(heading, ...values.map(value => { const td = document.createElement('td'); td.textContent = value; return td; }));
+  };
+  row('opponent', 'Pig', rival.hand); row('bank', 'Bank', state.bank);
+  $('opponent-dev').textContent = rival.devCount;
   const owner = p => p < 0 ? 'Unclaimed' : p === state.human ? 'You' : 'Pig';
-  $('awards').textContent = `Longest Road: ${owner(state.longestRoad)} (You ${me.roadLength} / Pig ${rival.roadLength}) · Largest Army: ${owner(state.largestArmy)} (You ${me.played[0]} / Pig ${rival.played[0]})`;
-  $('bank').textContent = `Bank: ${RES.map((r,i)=>`${r} ${state.bank[i]}`).join(' · ')}`;
+  row('longest-road', 'Longest Road', [owner(state.longestRoad), me.roadLength, rival.roadLength]);
+  row('largest-army', 'Largest Army', [owner(state.largestArmy), me.played[0], rival.played[0]]);
   $('log').replaceChildren(...log.slice(0,40).map(text=>{const li=document.createElement('li');li.textContent=text;return li;}));
   renderActions(); drawBoard();
 }
@@ -196,7 +200,7 @@ function drawBoard() {
   centers.forEach(([x,y],i)=>{
     const corners=points(x,y);corners.forEach((point,k)=>nodes[state.tileNodes[i][k]]=point);
     const resource=state.tiles[i], number=state.numbers[i];
-    const tile=svg('polygon',{points:corners.map(fmt).join(' '),class:'tile',fill:resource<0?palette.getPropertyValue('--sand').trim():COLORS[resource]});
+    const tile=svg('polygon',{points:corners.map(fmt).join(' '),class:'tile',fill:resource<0?'var(--sand)':COLORS[resource]});
     const name=resource<0?'Desert':RES[resource];
     const group=svg('g',{},[tile,svg('title',{},[`${name}, ${number||'no production'}`]),svg('polygon',{points:corners.map(([px,py])=>fmt([x+(px-x)*.91,y+(py-y)*.91])).join(' '),class:'tile-inset'}),svg('image',{href:`${resource<0?'desert':ICONS[resource]}.svg`,x:x-18,y:y-34,width:36,height:33,'pointer-events':'none'})]);
     if(number){
@@ -217,16 +221,16 @@ function drawBoard() {
   state.edges.forEach(([a,b],edge)=>{
     const [x1,y1]=nodes[a],[x2,y2]=nodes[b];
     board.append(svg('line',{x1,y1,x2,y2,class:'road-base'}));
-    for(let p=0;p<2;p++) if(state.players[p].roads[edge])board.append(svg('line',{x1,y1,x2,y2,stroke:palette.getPropertyValue(p===state.human?'--you':'--pig').trim(),'stroke-width':7,'stroke-linecap':'round','stroke-dasharray':p===state.human?'none':'9 3'}));
+    for(let p=0;p<2;p++) if(state.players[p].roads[edge])board.append(svg('line',{x1,y1,x2,y2,stroke:'#fff0d3','stroke-width':9,'stroke-linecap':'round'}),svg('line',{x1,y1,x2,y2,stroke:(p===state.human?'var(--you)':'var(--pig)'),'stroke-width':7,'stroke-linecap':'round','stroke-dasharray':p===state.human?'none':'9 3'}));
     if(mode==='road'&&available(54+edge))board.append(interactive(`Build road ${edge+1}`,54+edge,[svg('line',{x1,y1,x2,y2,class:'target-marker','stroke-width':6}),svg('line',{x1,y1,x2,y2,stroke:'transparent','stroke-width':22}),svg('circle',{cx:(x1+x2)/2,cy:(y1+y2)/2,r:15,class:'hit'})]));
   });
   nodes.forEach(([x,y],node)=>{
     for(let p=0;p<2;p++) {
       const level=state.players[p].nodes[node]; if(!level)continue;
-      const color=palette.getPropertyValue(p===state.human?'--you':'--pig').trim();
+      const color=(p===state.human?'var(--you)':'var(--pig)');
       const house=level===2?`M ${x-14} ${y+8} V ${y-3} l 7-7 7 7 v-5 l 7-7 7 7 v16 Z`:`M ${x-9} ${y+8} V ${y-3} l 9-9 9 9 v11 Z`;
-      board.append(svg('path',{d:house,fill:color,stroke:'#164361','stroke-width':2,'stroke-linejoin':'round'}));
-      board.append(p===state.human?svg('circle',{cx:x,cy:y+2,r:2.5,fill:'#164361'}):svg('path',{d:`M ${x} ${y-2} l 3 4-3 4-3-4Z`,fill:'#164361'}));
+      board.append(svg('path',{d:house,fill:color,stroke:'#fff0d3','stroke-width':1.8,'stroke-linejoin':'round'}));
+      board.append(p===state.human?svg('circle',{cx:x,cy:y+2,r:2.5,fill:'#fff'}):svg('path',{d:`M ${x} ${y-2} l 3 4-3 4-3-4Z`,fill:'#fff'}));
     }
     const action=mode==='city'?126+node:node;
     if(['city','settlement'].includes(mode)&&available(action))board.append(interactive(`${mode==='city'?'Upgrade city':'Build settlement'} ${node+1}`,action,[svg('circle',{cx:x,cy:y,r:6,class:'target-marker'}),svg('circle',{cx:x,cy:y,r:21,class:'hit'})]));
@@ -241,7 +245,7 @@ function actionName(a) {
 }
 function appendEvents(events) {
   for(const [player,action,phase,outcome] of events) {
-    const who=player===state.human?'You':'Pig';
+    const who=player===state.human?'You':'Oversized Pig';
     if(action>=0&&action!==180)log.unshift(`${who}: ${actionName(action)}`);
     else if(phase===3)log.unshift(`${who}: Rolled ${outcome+2}`);
     else if(phase===6&&outcome>=0)log.unshift(`${who}: Stole ${RES[outcome]}`);
@@ -282,7 +286,7 @@ $('load-file').onchange=async()=>{
   try{
     if(file.size>250000)throw Error('Saved game is too large.');
     const save=JSON.parse(await file.text());
-    if(save.version!==1||!Number.isInteger(save.seed)||save.seed<0||save.seed>0xffffffff||![0,1].includes(save.human)||!Array.isArray(save.history)||save.history.length>10000||save.history.some(a=>!Number.isInteger(a)||a<0||a>=249))throw Error('This is not a valid Colonizing Pig save.');
+    if(save.version!==1||!Number.isInteger(save.seed)||save.seed<0||save.seed>0xffffffff||![0,1].includes(save.human)||!Array.isArray(save.history)||save.history.length>10000||save.history.some(a=>!Number.isInteger(a)||a<0||a>=249))throw Error('This is not a valid Oversized Pig save.');
     // Keep the last good save on disk until the worker validates every move.
     paused=true;boot({...save,paused:true});
   }catch(error){fail(error.message);}

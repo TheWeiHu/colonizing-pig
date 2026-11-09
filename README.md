@@ -1,8 +1,8 @@
-# Colonizing Pig
+# Oversized Pig
 
 Play our strongest one-minute leaderboard bot in your browser. No account, backend, GPU, API key, or analytics. The engine and model run on your device; games save locally.
 
-**Private preview.** Wei reports that the bot is currently the top bot on Colonist.io (November 9, 2026). The Oversized Pigs profile link and public-release license are pending. This project is independent of Colonist and the game publishers.
+**Private preview.** **oversizedpig reached global #1 on Colonist’s 1v1 leaderboard.** The [profile screenshot](web/profile-2026-11-09.png) supplied November 9, 2026 shows a 2552 rating, 313 games, and 62.9% wins. A [separate leaderboard snapshot](web/leaderboard-2026-11-09.jpg) shows #1 at 2533. These are snapshots, not a live ranking or the browser bot’s measured win rate. The profile URL and public-release license are pending. This project is independent of Colonist and the game publishers.
 
 [Wei Hu](https://weihu.ca) · [Updates on X](https://x.com/_weihu_)
 
