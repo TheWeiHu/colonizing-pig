@@ -7,7 +7,7 @@ const DEV = ['Knight', 'Victory Point', 'Road Building', 'Year Of Plenty', 'Mono
 const LAND = [[0,-2],[1,-2],[2,-2],[2,-1],[2,0],[1,1],[0,2],[-1,2],[-2,2],[-2,1],[-2,0],[-1,-1],[0,-1],[1,-1],[1,0],[0,1],[-1,1],[-1,0],[0,0]];
 const PAIRS = RES.flatMap((_, a) => RES.slice(a).map((_, b) => [a, a+b]));
 const SAVE_KEY = 'colonizing-pig-v1-porto-ruling';
-let worker, generation = 0, request = 0, state = null, busy = true, ready = false, paused = false;
+let worker, generation = 0, request = 0, state = null, busy = true, ready = false, paused = false, resigned = false;
 let mode = '', startTime = 0, timer = null, loadTimer = null, restoreOnReady = null, forcedSingle = false, log = [], homeSave = null;
 window.pigDiagnostics = {timings: [], workers: 0};
 
@@ -15,13 +15,13 @@ function readSave() {
   try {
     const save = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!save) return null;
-    if (save.version !== 1 || !Number.isInteger(save.seed) || ![0,1].includes(save.human) || !Array.isArray(save.history) || save.history.length > 10000) throw Error();
+    if (save.version !== 1 || !Number.isInteger(save.seed) || ![0,1].includes(save.human) || !Array.isArray(save.history) || save.history.length > 10000 || (save.resigned !== undefined && typeof save.resigned !== 'boolean')) throw Error();
     return save;
   } catch { $('load-status').textContent = 'The saved game could not be read. You can start a new one.'; return null; }
 }
 function persist(extra = {}) {
   if (!state) return null;
-  const save = {version:1, seed:state.seed, human:state.human, history:state.history, paused, log:log.slice(0,40), ...extra};
+  const save = {version:1, seed:state.seed, human:state.human, history:state.history, paused, resigned, log:log.slice(0,40), ...extra};
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(save));
     $('save-status').textContent = 'Saved On This Device';
@@ -44,6 +44,7 @@ function boot(saved = null) {
   ready = false; busy = true; stopTimer(); restoreOnReady = saved;
   $('start').disabled = true; $('start').textContent = 'Loading Model…';
   $('resume-game').hidden = !homeSave; $('resume-game').disabled = true;
+  $('resume-game').textContent = homeSave?.resigned ? 'View Result' : 'Resume Game';
   $('start').classList.toggle('primary', !homeSave);
   $('load-status').textContent = 'Getting Oversized Pig Ready…';
   $('error').hidden = true;
@@ -66,7 +67,7 @@ function boot(saved = null) {
       ready = true; window.pigDiagnostics.workers = data.workers;
       $('start').disabled = false; $('start').textContent = homeSave ? 'New Game' : 'Play';
       $('resume-game').disabled = false;
-      $('load-status').textContent = homeSave ? 'Continue where you left off, or start a new island.' : 'Starting order is drawn automatically.';
+      $('load-status').textContent = homeSave?.resigned ? 'Your last game ended by resignation.' : homeSave ? 'Continue where you left off, or start a new island.' : 'Starting order is drawn automatically.';
       if (restoreOnReady) {
         log = Array.isArray(saved.log) ? saved.log.filter(x => typeof x === 'string').slice(0,40) : [];
         paused = Boolean(saved.paused);
@@ -74,6 +75,8 @@ function boot(saved = null) {
       } else busy = false;
     } else if (data.type === 'state') {
       stopTimer(); busy = false; state = data.state; homeSave = null;
+      if (data.restored) resigned = saved?.resigned === true && !state.done;
+      if (resigned) state = {...state, done:true, winner:1-state.human, legal:[]};
       window.pigDiagnostics.lastState = state;
       if (data.elapsed !== undefined) {
         window.pigDiagnostics.timings.push({phase:state.phase, ms:data.elapsed});
@@ -118,8 +121,9 @@ function render() {
   $('round').textContent = state.turn ? `Turn ${state.turn}` : 'Opening';
   $('dice').textContent = state.roll || '—';
   $('pause').textContent = paused ? 'Resume' : 'Pause'; $('pause').disabled = state.done;
+  $('resign').disabled = state.done;
   let title = 'Your Turn', hint = 'Build, trade, or end your turn.';
-  if (state.done) { title = state.winner < 0 ? 'Game Drawn' : state.winner === state.human ? 'You Win!' : 'Oversized Pig Wins'; hint = state.winner < 0 ? 'The move limit was reached.' : 'Fifteen points. Another island awaits.'; }
+  if (state.done) { title = state.winner < 0 ? 'Game Drawn' : state.winner === state.human ? 'You Win!' : 'Oversized Pig Wins'; hint = resigned ? 'You resigned. Your game is saved, including the final position.' : state.winner < 0 ? 'The move limit was reached.' : 'Fifteen points. Another island awaits.'; }
   else if (paused) { title = 'Game Paused'; hint = 'Resume whenever you are ready.'; }
   else if (busy && state.current !== state.human) { title = 'Thinking…'; hint = 'Planning its next move…'; }
   else if (busy) { title = 'Applying Your Move'; hint = 'One moment…'; }
@@ -262,7 +266,7 @@ function startGame() {
   if(!ready||busy)return;
   $('start').disabled=true;
   const [seed, draw]=crypto.getRandomValues(new Uint32Array(2));
-  log=[];paused=false;busy=true;send('new',{seed,human:draw & 1});
+  log=[];paused=false;resigned=false;busy=true;send('new',{seed,human:draw & 1});
 }
 $('start-form').onsubmit=e=>{
   e.preventDefault();if(!ready)return;
@@ -285,6 +289,15 @@ $('pause').onclick=()=>{
   if(paused){worker.terminate();generation++;ready=false;busy=false;stopTimer();render();}
   else boot({...readSave(),paused:false});
 };
+$('resign').onclick=()=>{if(state&&!state.done)$('resign-dialog').showModal();};
+$('resign-dialog').onclose=()=>{
+  if($('resign-dialog').returnValue!=='resign'||!state||state.done)return;
+  worker?.terminate();generation++;clearTimeout(loadTimer);ready=false;busy=false;paused=false;resigned=true;stopTimer();
+  state={...state,done:true,winner:1-state.human,legal:[]};
+  window.pigDiagnostics.lastState=state;
+  log.unshift('You resigned. Oversized Pig wins.');
+  $('error').hidden=true;persist();render();$('status').scrollIntoView({block:'center',behavior:'smooth'});
+};
 $('zoom').onclick=()=>{
   const zoomed=$('board-wrap').classList.toggle('zoomed');$('zoom').setAttribute('aria-pressed',zoomed);$('zoom').textContent=zoomed?'Fit Board':'Zoom Board';
   if(zoomed){$('board-wrap').scrollLeft=($('board-wrap').scrollWidth-$('board-wrap').clientWidth)/2;$('board-wrap').scrollTop=200;}
@@ -298,7 +311,7 @@ $('new-dialog').onclose=()=>{
 };
 $('export').onclick=()=>{
   if(!state)return;
-  const data={version:1,seed:state.seed,human:state.human,history:state.history,paused:true,log};
+  const data={version:1,seed:state.seed,human:state.human,history:state.history,paused:true,resigned,log};
   const url=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
   const a=document.createElement('a');a.href=url;a.download=`colonizing-pig-${state.seed}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
@@ -308,6 +321,7 @@ $('load-file').onchange=async()=>{
   try{
     if(file.size>250000)throw Error('Saved game is too large.');
     const save=JSON.parse(await file.text());
+    if(save.resigned!==undefined&&typeof save.resigned!=='boolean')throw Error('Invalid resignation result.');
     if(save.version!==1||!Number.isInteger(save.seed)||save.seed<0||save.seed>0xffffffff||![0,1].includes(save.human)||!Array.isArray(save.history)||save.history.length>10000||save.history.some(a=>!Number.isInteger(a)||a<0||a>=249))throw Error('This is not a valid Oversized Pig save.');
     // Keep the last good save on disk until the worker validates every move.
     paused=true;boot({...save,paused:true});
