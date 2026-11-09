@@ -1,8 +1,8 @@
 # Oversized Pig
 
-Play our strongest one-minute leaderboard bot in your browser. No account, backend, GPU, API key, or analytics. The engine and model run on your device; games save locally. Exit Game stops play and returns home; Resume Game restores your position, including after a reload. Resign ends the game with a win for Oversized Pig and preserves the replay and resignation result in your save.
+Play our strongest one-minute leaderboard bot in your browser. No account, GPU, API key, or third-party analytics. The engine and model run on your device; games save locally. On the hosted site, completed and resigned games are also uploaded automatically to private storage to improve the bot. Exit Game stops play and returns home; Resume Game restores your position, including after a reload. Resign ends the game with a win for Oversized Pig and preserves the replay and resignation result in your save.
 
-**Private preview.** **oversizedpig reached global #1 on Colonist’s 1v1 leaderboard.** The [leaderboard screenshot](web/leaderboard-2026-11-09.png) supplied November 9, 2026 shows a 2552 rating, 313 games, and 62.9% wins. These are account statistics from a snapshot, not a live ranking or the browser bot’s measured win rate. The profile URL and public-release license are pending. This project is independent of Colonist and the game publishers.
+**oversizedpig reached global #1 on Colonist’s 1v1 leaderboard.** The [leaderboard screenshot](web/leaderboard-2026-11-09.png) supplied November 9, 2026 shows a 2552 rating, 313 games, and 62.9% wins. These are account statistics from a snapshot, not a live ranking or the browser bot’s measured win rate. The profile URL and public-release license are pending. This project is independent of Colonist and the game publishers.
 
 [Wei Hu](https://weihu.ca) · [Updates on X](https://x.com/_weihu_)
 
@@ -26,7 +26,13 @@ make build
 make serve
 ```
 
-`dist/` is the whole website. Deploy it to Netlify with the included `_headers`; no functions or paid inference service is needed. Any static host works: shared-memory headers enable up to four workers, while other hosts use one worker with the same search settings. Only the selected ~4.6 MB engine/model is downloaded. Hosting bandwidth and requests can still incur charges.
+`dist/` is the whole website. Deploy it to Netlify with the included `_headers`; no paid inference service is needed. Any static host works: shared-memory headers enable up to four workers, while other hosts use one worker with the same search settings. Only the selected ~4.6 MB engine/model is downloaded. Hosting bandwidth and requests can still incur charges.
+
+## Game recordings
+
+The hosted game automatically submits its seed, moves, player seat, outcome, and pinned engine/model hashes to a small AWS collector. The payload contains no names, account identifiers, IP addresses, or browser fingerprint. Replays are private and marked unverified until their moves can be checked before training.
+
+Uploads retry after connection failures without interrupting play. Up to 32 pending recordings are retained on the device; unavailable or full browser storage can prevent recovery after closing the page. The local game save is independent. Local builds and other hostnames do not upload. `scripts/replay_config.py` pins the exact engine and model in the build; `web/replay-config.json` contains the hosted origin and public endpoint.
 
 ## Model and rules
 

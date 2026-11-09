@@ -21,3 +21,4 @@ header{max-width:1080px;margin:auto;padding:12px 24px;display:flex;align-items:c
 
 #start-form{gap:10px;flex-wrap:wrap}#resume-game{min-width:170px;min-height:52px;font-size:18px}#start-form:has(#resume-game:not([hidden])) #start{min-width:140px;font-size:16px}.secondary #exit-game{color:#fff;font-weight:800}
 .secondary #exit-game{border-color:#ffffff55;background:#0b477d;padding:8px 12px}
+.replay-notice{font-size:13px;line-height:1.5;color:#d1e2ef;max-width:520px}.welcome .replay-notice{margin:12px auto}#game>.replay-notice{margin:12px 0}

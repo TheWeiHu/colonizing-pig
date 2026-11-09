@@ -5,3 +5,4 @@ dist/
 *.zip
 test-results/
 playwright-report/
+__pycache__/

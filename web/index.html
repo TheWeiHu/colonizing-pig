@@ -4,11 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#1768b2">
-  <meta name="description" content="Play Oversized Pig, a self-play-trained island-building bot. The full model runs privately in your browser.">
+  <meta name="description" content="Play Oversized Pig, a self-play-trained island-building bot. The full model runs on your device.">
   <title>Oversized Pig</title>
   <link rel="icon" href="pig.svg" type="image/svg+xml">
   <link rel="preload" href="nunito-sans.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
+  <script src="replay-config.js" defer></script>
+  <script src="replay-upload.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -27,6 +29,7 @@
         <button class="primary" id="start" disabled>Loading Model…</button>
       </form>
       <p id="load-status" role="status">Loading ~4.6 MB. The bot runs entirely on your device.</p>
+      <p class="replay-notice" hidden>Completed and resigned games are automatically saved to improve the pig.</p>
       <button class="quiet load-file" type="button">Load Saved Game</button>
       <section class="ranking-proof" aria-label="Ranking screenshots">
         <div class="ranking-images">
@@ -49,6 +52,7 @@
       <div id="actions" class="actions" aria-label="Available actions"></div>
       <div id="choice" class="choice"></div>
       <div class="secondary"><button id="exit-game" type="button" class="quiet">Exit Game</button><button id="resign" type="button" class="quiet">Resign</button><button id="new-game" type="button" class="quiet">New Game</button><span id="save-status">Saved On This Device</span><div><button class="quiet load-file" type="button">Load File</button><button id="export" type="button" class="quiet">Save File</button></div></div>
+      <p class="replay-notice" hidden>Completed and resigned games are automatically saved to improve the pig.</p>
       <details class="game-details"><summary>Game Details</summary>
         <table class="resource-table"><caption>Resources</caption><thead><tr><th scope="col"><span class="sr-only">Supply</span></th><th scope="col"><img src="wood.svg" width="26" height="26" alt=""><span>Lumber</span></th><th scope="col"><img src="brick.svg" width="26" height="26" alt=""><span>Brick</span></th><th scope="col"><img src="wool.svg" width="26" height="26" alt=""><span>Wool</span></th><th scope="col"><img src="grain.svg" width="26" height="26" alt=""><span>Grain</span></th><th scope="col"><img src="ore.svg" width="26" height="26" alt=""><span>Ore</span></th></tr></thead><tbody><tr id="opponent"></tr><tr id="bank"></tr></tbody></table>
         <p class="hidden-cards"><span>Oversized Pig’s Development Cards</span><span><b id="opponent-dev">0</b> Hidden</span></p>

@@ -10,6 +10,7 @@ build:
 	mkdir -p dist
 	cp web/* dist/
 	cp model.json dist/
+	python3 scripts/replay_config.py
 	$(EMXX) $(SOURCES) $(WASM_FLAGS) --embed-file weights -o dist/pig-single.js
 	$(EMXX) $(SOURCES) $(WASM_FLAGS) -pthread -sPTHREAD_POOL_SIZE=3 -sPTHREAD_POOL_SIZE_STRICT=2 --embed-file weights -o dist/pig-threaded.js
 

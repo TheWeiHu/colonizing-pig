@@ -86,6 +86,7 @@ function boot(saved = null) {
       $('welcome').hidden = true; $('game').hidden = false;
       mode = state.phase === 0 ? 'settlement' : [1,9].includes(state.phase) ? 'road' : state.phase === 5 ? 'robber' : '';
       persist(); render();
+      window.pigReplayUploads?.enqueue(state, resigned);
       if (!state.done && state.current !== state.human && !paused) think();
     } else if (data.type === 'error') {
       clearTimeout(loadTimer);
@@ -297,6 +298,7 @@ $('resign-dialog').onclose=()=>{
   window.pigDiagnostics.lastState=state;
   log.unshift('You resigned. Oversized Pig wins.');
   $('error').hidden=true;persist();render();$('status').scrollIntoView({block:'center',behavior:'smooth'});
+  window.pigReplayUploads?.enqueue(state, resigned);
 };
 $('zoom').onclick=()=>{
   const zoomed=$('board-wrap').classList.toggle('zoomed');$('zoom').setAttribute('aria-pressed',zoomed);$('zoom').textContent=zoomed?'Fit Board':'Zoom Board';
