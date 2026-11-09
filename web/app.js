@@ -1,6 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const RES = ['Lumber', 'Brick', 'Wool', 'Grain', 'Ore'];
+const ICONS = ['wood', 'brick', 'wool', 'grain', 'ore'];
 const palette = getComputedStyle(document.documentElement);
 const COLORS = ['wood','brick','wool','grain','ore'].map(name => palette.getPropertyValue(`--${name}`).trim());
 const DEV = ['Knight', 'Victory Point', 'Road Building', 'Year Of Plenty', 'Monopoly'];
@@ -41,7 +42,7 @@ function boot(saved = null) {
   worker?.terminate(); clearTimeout(loadTimer); const epoch = ++generation;
   ready = false; busy = true; stopTimer(); restoreOnReady = saved;
   $('start').disabled = true; $('start').textContent = 'Loading Model…';
-  $('load-status').textContent = 'Loading the model on your device…';
+  $('load-status').textContent = 'Getting The Pig Ready…';
   $('error').hidden = true;
   const threaded = !forcedSingle && self.crossOriginIsolated && typeof SharedArrayBuffer !== 'undefined';
   worker = new Worker('worker.js');
@@ -61,7 +62,7 @@ function boot(saved = null) {
       clearTimeout(loadTimer);
       ready = true; window.pigDiagnostics.workers = data.workers;
       $('start').disabled = false; $('start').textContent = 'Play';
-      $('load-status').textContent = 'Ready. Full-strength search runs on your device.';
+      $('load-status').textContent = 'Starting order is drawn automatically.';
       if (restoreOnReady) {
         log = Array.isArray(saved.log) ? saved.log.filter(x => typeof x === 'string').slice(0,40) : [];
         paused = Boolean(saved.paused);
@@ -93,7 +94,7 @@ function think() {
   timer = setInterval(() => {
     const elapsed = (performance.now()-startTime)/1000;
     $('status').textContent = `Pig Is Thinking · ${elapsed.toFixed(0)}s`;
-    $('hint').textContent = elapsed > 15 ? 'Full search is still running. You can pause without losing your game.' : 'Same search. Your device sets the pace.';
+    $('hint').textContent = elapsed > 15 ? 'Full search is still running. You can pause without losing your game.' : 'Planning its next move…';
   }, 500);
   send('bot');
 }
@@ -116,7 +117,7 @@ function render() {
   let title = 'Your Turn', hint = 'Build, trade, or end your turn.';
   if (state.done) { title = state.winner < 0 ? 'Game Drawn' : state.winner === state.human ? 'You Win!' : 'The Pig Wins'; hint = state.winner < 0 ? 'The move limit was reached.' : 'Fifteen points. Another island awaits.'; }
   else if (paused) { title = 'Game Paused'; hint = 'Resume whenever you are ready.'; }
-  else if (busy && state.current !== state.human) { title = 'Pig Is Thinking'; hint = 'Same search. Your device sets the pace.'; }
+  else if (busy && state.current !== state.human) { title = 'Pig Is Thinking'; hint = 'Planning its next move…'; }
   else if (busy) { title = 'Applying Your Move'; hint = 'One moment…'; }
   else if (state.phase === 0) { title = 'Place A Settlement'; hint = 'Choose a highlighted corner. Numbers with more dots produce more often.'; }
   else if ([1,9].includes(state.phase)) { title = 'Place A Road'; hint = 'Choose a highlighted edge.'; }
@@ -129,10 +130,11 @@ function render() {
   $('status').textContent = title; $('hint').textContent = hint;
   $('hand').replaceChildren(...RES.map((name,i) => {
     const div = document.createElement('div'); div.className = 'resource'; div.style.setProperty('--resource', COLORS[i]);
+    const icon = document.createElement('img'); icon.src = `${ICONS[i]}.svg`; icon.alt = ''; icon.width = 28; icon.height = 28;
     const count = document.createElement('b'); count.textContent = me.hand[i];
-    const label = document.createElement('span'); label.textContent = name; div.append(count,label); return div;
+    const label = document.createElement('span'); label.textContent = name; div.append(icon,count,label); return div;
   }));
-  $('dev-hand').textContent = me.dev.map((count,i) => count ? `${DEV[i]} ${count}${me.bought[i] ? ` (${me.bought[i]} New)` : ''}` : '').filter(Boolean).join(' · ') || 'No Development Cards';
+  $('dev-hand').textContent = me.dev.map((count,i) => count ? `${DEV[i]} ${count}${me.bought[i] ? ` (${me.bought[i]} New)` : ''}` : '').filter(Boolean).join(' · ') || '';
   $('opponent').textContent = `Pig's Resources: ${RES.map((r,i)=>`${r} ${rival.hand[i]}`).join(' · ')} · Hidden Development Cards: ${rival.devCount}`;
   const owner = p => p < 0 ? 'Unclaimed' : p === state.human ? 'You' : 'Pig';
   $('awards').textContent = `Longest Road: ${owner(state.longestRoad)} (You ${me.roadLength} / Pig ${rival.roadLength}) · Largest Army: ${owner(state.largestArmy)} (You ${me.played[0]} / Pig ${rival.played[0]})`;
@@ -190,16 +192,17 @@ function drawBoard() {
   const points=(x,y)=>Array.from({length:6},(_,k)=>[x+size*Math.cos((-90+k*60)*Math.PI/180),y+size*Math.sin((-90+k*60)*Math.PI/180)]);
   const fmt=p=>p.map(v=>v.toFixed(2)).join(',');
   const available=action=>canPlay()&&state.legal.includes(action);
+  for (const [color,width] of [['#66d2f2',14],['#f3d897',9]]) centers.forEach(([x,y])=>board.append(svg('polygon',{points:points(x,y).map(fmt).join(' '),fill:color,stroke:color,'stroke-width':width,'stroke-linejoin':'round'})));
   centers.forEach(([x,y],i)=>{
     const corners=points(x,y);corners.forEach((point,k)=>nodes[state.tileNodes[i][k]]=point);
     const resource=state.tiles[i], number=state.numbers[i];
     const tile=svg('polygon',{points:corners.map(fmt).join(' '),class:'tile',fill:resource<0?palette.getPropertyValue('--sand').trim():COLORS[resource]});
     const name=resource<0?'Desert':RES[resource];
-    const group=svg('g',{},[tile,svg('title',{},[`${name}, ${number||'no production'}`]),svg('text',{x,y:y-20,class:'tile-label',style:resource===0?'fill:#fff':''},[name])]);
+    const group=svg('g',{},[tile,svg('title',{},[`${name}, ${number||'no production'}`]),svg('polygon',{points:corners.map(([px,py])=>fmt([x+(px-x)*.91,y+(py-y)*.91])).join(' '),class:'tile-inset'}),svg('image',{href:`${resource<0?'desert':ICONS[resource]}.svg`,x:x-18,y:y-34,width:36,height:33,'pointer-events':'none'})]);
     if(number){
-      group.append(svg('circle',{cx:x,cy:y+6,r:19,class:'number-token'}),svg('text',{x,y:y+10,class:'number-text'},[String(number)]));
+      group.append(svg('circle',{cx:x,cy:y+15,r:16,class:'number-token'}),svg('text',{x,y:y+19,class:'number-text'},[String(number)]));
       const count=6-Math.abs(7-number);
-      for(let k=0;k<count;k++)group.append(svg('circle',{cx:x+(k-(count-1)/2)*4,cy:y+18,r:1.4,class:'pips'}));
+      for(let k=0;k<count;k++)group.append(svg('circle',{cx:x+(k-(count-1)/2)*4,cy:y+26,r:1.3,class:'pips'}));
     }
     if(state.robber===i)group.append(svg('g',{'aria-label':'Robber'},[svg('path',{d:`M ${x+23} ${y+7} l -5 15 h 14 l -5 -15`,fill:'#152835',stroke:'#f4f1e9','stroke-width':1.2}),svg('circle',{cx:x+25,cy:y+4,r:5,fill:'#152835',stroke:'#f4f1e9','stroke-width':1.2})]));
     if(mode==='robber'&&available(205+i)) group.append(interactive(`Move robber to ${name} ${number||'desert'}`,205+i,[svg('polygon',{points:corners.map(fmt).join(' '),class:'target-marker',fill:'transparent'})]));
@@ -207,23 +210,26 @@ function drawBoard() {
   });
   state.portNodes.forEach(([a,b],i)=>{
     const x=(nodes[a][0]+nodes[b][0])/2,y=(nodes[a][1]+nodes[b][1])/2,d=Math.hypot(x,y),px=x+x/d*34,py=y+y/d*34;
-    board.append(svg('line',{x1:x,y1:y,x2:px,y2:py,class:'port-line'}),svg('text',{x:px,y:py+4,class:'port-label'},[state.ports[i]<0?'3:1':`${RES[state.ports[i]]} 2:1`]));
+    const port=svg('g',{},[svg('title',{},[state.ports[i]<0?'Any resource port 3:1':`${RES[state.ports[i]]} port 2:1`]),svg('line',{x1:x,y1:y,x2:px,y2:py,class:'port-line'})]);
+    if(state.ports[i]>=0)port.append(svg('image',{href:`${ICONS[state.ports[i]]}.svg`,x:px-10,y:py-18,width:20,height:19}));
+    port.append(svg('text',{x:px,y:py+12,class:'port-label'},[state.ports[i]<0?'3:1':'2:1']));board.append(port);
   });
   state.edges.forEach(([a,b],edge)=>{
     const [x1,y1]=nodes[a],[x2,y2]=nodes[b];
     board.append(svg('line',{x1,y1,x2,y2,class:'road-base'}));
-    for(let p=0;p<2;p++) if(state.players[p].roads[edge])board.append(svg('line',{x1,y1,x2,y2,stroke:p===state.human?'#78d7ff':'#d4aeff','stroke-width':7,'stroke-linecap':'round','stroke-dasharray':p===state.human?'none':'9 3'}));
+    for(let p=0;p<2;p++) if(state.players[p].roads[edge])board.append(svg('line',{x1,y1,x2,y2,stroke:palette.getPropertyValue(p===state.human?'--you':'--pig').trim(),'stroke-width':7,'stroke-linecap':'round','stroke-dasharray':p===state.human?'none':'9 3'}));
     if(mode==='road'&&available(54+edge))board.append(interactive(`Build road ${edge+1}`,54+edge,[svg('line',{x1,y1,x2,y2,class:'target-marker','stroke-width':6}),svg('line',{x1,y1,x2,y2,stroke:'transparent','stroke-width':22}),svg('circle',{cx:(x1+x2)/2,cy:(y1+y2)/2,r:15,class:'hit'})]));
   });
   nodes.forEach(([x,y],node)=>{
     for(let p=0;p<2;p++) {
       const level=state.players[p].nodes[node]; if(!level)continue;
-      const color=p===state.human?'#78d7ff':'#d4aeff';
-      const shape=p===state.human?svg('circle',{cx:x,cy:y,r:10,fill:color,stroke:'#102c40','stroke-width':2}):svg('path',{d:`M ${x} ${y-13} L ${x+13} ${y} L ${x} ${y+13} L ${x-13} ${y} Z`,fill:color,stroke:'#102c40','stroke-width':2});
-      board.append(shape,svg('text',{x,y:y+4,'text-anchor':'middle','font-size':11,'font-weight':800,fill:'#102c40','pointer-events':'none'},[level===2?'Ⅱ':'Ⅰ']));
+      const color=palette.getPropertyValue(p===state.human?'--you':'--pig').trim();
+      const house=level===2?`M ${x-14} ${y+8} V ${y-3} l 7-7 7 7 v-5 l 7-7 7 7 v16 Z`:`M ${x-9} ${y+8} V ${y-3} l 9-9 9 9 v11 Z`;
+      board.append(svg('path',{d:house,fill:color,stroke:'#164361','stroke-width':2,'stroke-linejoin':'round'}));
+      board.append(p===state.human?svg('circle',{cx:x,cy:y+2,r:2.5,fill:'#164361'}):svg('path',{d:`M ${x} ${y-2} l 3 4-3 4-3-4Z`,fill:'#164361'}));
     }
     const action=mode==='city'?126+node:node;
-    if(['city','settlement'].includes(mode)&&available(action))board.append(interactive(`${mode==='city'?'Upgrade city':'Build settlement'} ${node+1}`,action,[svg('circle',{cx:x,cy:y,r:12,class:'target-marker'}),svg('circle',{cx:x,cy:y,r:17,class:'hit'})]));
+    if(['city','settlement'].includes(mode)&&available(action))board.append(interactive(`${mode==='city'?'Upgrade city':'Build settlement'} ${node+1}`,action,[svg('circle',{cx:x,cy:y,r:6,class:'target-marker'}),svg('circle',{cx:x,cy:y,r:21,class:'hit'})]));
   });
 }
 function actionName(a) {
