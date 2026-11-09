@@ -1,0 +1,15 @@
+{
+  "name": "porto-ruling",
+  "sourceCommit": "bef235f3b92d80b19e9f9142842b2e2bdce79554",
+  "spec": "weights/porto-verdict.bin+weights/ulaanbaatar-caravan-opening.bin+weights/dublin-waypoint-opening.bin:6@1,0.75,2,1,6,0.25,1,1,1,32,1,0,4,0,0,1,128,0,1,1,0.1,8,3,0,2,0,2,1,4,0,0,0,1,1,0,0,0,4",
+  "benchmark": {
+    "secondsPerGame": 38.37,
+    "workers": 4,
+    "note": "oslo-surge with porto-verdict's evaluator: oslo-tide continued on its search's choices among planned turns, each as its end-of-turn positions, over two rounds of 24,000 self-play games by harare-cards' search. Before entry: 565-435 (56.5%) against oslo-surge over 1,000 games on two machines; with the rollout stops also averaged with the board-graph evaluator, 572-428 (57.2%). Thinking time is wall-clock per side with four cores per game, eight games at a time on a 64-thread machine"
+  },
+  "sha256": {
+    "weights/porto-verdict.bin": "fc5bc96d2961f7210bfb66dcc904d612199c277c59a0096a7d493a06c739b7b7",
+    "weights/ulaanbaatar-caravan-opening.bin": "207e48c1dafd6891c2837a1f8c358582a5539432cb45f478beeb19675619bb4d",
+    "weights/dublin-waypoint-opening.bin": "64a34bee767d0f89bbb0e7ba4bc5e8adaf2d7cf00e981665a2c9e3f1d45ced36"
+  }
+}

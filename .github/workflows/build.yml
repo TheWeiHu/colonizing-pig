@@ -1,0 +1,40 @@
+name: Browser Build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Emscripten
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install 7.0.0
+          "$RUNNER_TEMP/emsdk/emsdk" activate 7.0.0
+      - name: Test and build
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          make test
+          make build
+          make test-wasm
+          ./build/test fixtures > build/fixtures.json
+          node tests/wasm.cjs single build/fixtures.json
+          node tests/wasm.cjs threaded build/fixtures.json
+      - name: Package local app
+        run: zip -r colonizing-pig.zip dist serve.py README.md
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Browser tests
+        run: |
+          npm ci
+          PLAYWRIGHT_SKIP_BROWSER_GC=1 npx playwright install --with-deps chromium webkit
+          npm run test:browser
+      - uses: actions/upload-artifact@v4
+        with:
+          name: colonizing-pig
+          path: colonizing-pig.zip
