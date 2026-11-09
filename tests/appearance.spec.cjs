@@ -5,7 +5,7 @@ test('terrain stays colored across reloads; screenshots and details remain reada
   const f = JSON.parse(fs.readFileSync('build/fixtures.json')).find(x => x.history.length === 150);
   await page.goto('/');
   await expect(page.locator('.ranking-proof')).toBeVisible();
-  await expect(page.locator('.ranking-proof img')).toHaveCount(2);
+  await expect(page.locator('.ranking-proof img')).toHaveCount(1);
   await expect(page.locator('#ranking-dialog')).toHaveCount(0);
   await page.evaluate(save => localStorage.setItem('colonizing-pig-v1-porto-ruling', JSON.stringify(save)), {version:1,seed:f.seed,human:1-f.human,history:f.history,paused:false,log:[]});
   for (let reload=0; reload<3; reload++) {

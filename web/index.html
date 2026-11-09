@@ -23,16 +23,16 @@
       <p class="ranking-headline"><strong>#1 Global</strong> On Colonist 1v1</p>
       <p>Build your island. Take on the top-ranked pig.</p>
       <form id="start-form">
+        <button class="primary" id="resume-game" type="button" hidden>Resume Game</button>
         <button class="primary" id="start" disabled>Loading Model…</button>
       </form>
       <p id="load-status" role="status">Loading ~4.6 MB. The bot runs entirely on your device.</p>
       <button class="quiet load-file" type="button">Load Saved Game</button>
       <section class="ranking-proof" aria-label="Ranking screenshots">
         <div class="ranking-images">
-          <figure><a href="leaderboard-2026-11-09.jpg" target="_blank" rel="noopener"><img src="leaderboard-2026-11-09.jpg" width="1170" height="1704" loading="lazy" alt="Colonist global 1v1 leaderboard with oversizedpig ranked first at rating 2533"></a><figcaption>Global Leaderboard · 2533 Rating</figcaption></figure>
-          <figure><a href="profile-2026-11-09.png" target="_blank" rel="noopener"><img src="profile-2026-11-09.png" width="1535" height="1632" loading="lazy" alt="oversizedpig’s Colonist profile: global 1v1 rank 1, rating 2552, 313 games, 62.9 percent wins"></a><figcaption>1v1 Profile · 2552 Rating · 62.9% Wins</figcaption></figure>
+          <figure><a href="leaderboard-2026-11-09.png" target="_blank" rel="noopener"><img src="leaderboard-2026-11-09.png" width="1797" height="1376" loading="lazy" alt="Colonist global 1v1 leaderboard: oversizedpig is number 1 with a 2552 rating, 62.9 percent wins and 313 games"></a><figcaption>#1 Global · 2552 Rating · 313 Games · 62.9% Wins</figcaption></figure>
         </div>
-        <p>Snapshots provided November 9, 2026, at different ratings. Rankings change over time. Open either image to view it full-size.</p>
+        <p>Screenshot provided November 9, 2026. Rankings change over time. Open the image to view it full-size.</p>
       </section>
     </section>
     <section id="game" hidden aria-label="Game">
@@ -48,7 +48,7 @@
       <section class="hand-panel" aria-label="Your resources"><h2 class="sr-only">Your Hand</h2><div id="hand" class="hand"></div><div id="dev-hand" class="dev-hand"></div></section>
       <div id="actions" class="actions" aria-label="Available actions"></div>
       <div id="choice" class="choice"></div>
-      <div class="secondary"><button id="new-game" type="button" class="quiet">New Game</button><span id="save-status">Saved On This Device</span><div><button class="quiet load-file" type="button">Load File</button><button id="export" type="button" class="quiet">Save File</button></div></div>
+      <div class="secondary"><button id="exit-game" type="button" class="quiet">Exit Game</button><button id="new-game" type="button" class="quiet">New Game</button><span id="save-status">Saved On This Device</span><div><button class="quiet load-file" type="button">Load File</button><button id="export" type="button" class="quiet">Save File</button></div></div>
       <details class="game-details"><summary>Game Details</summary>
         <table class="resource-table"><caption>Resources</caption><thead><tr><th scope="col"><span class="sr-only">Supply</span></th><th scope="col"><img src="wood.svg" width="26" height="26" alt=""><span>Lumber</span></th><th scope="col"><img src="brick.svg" width="26" height="26" alt=""><span>Brick</span></th><th scope="col"><img src="wool.svg" width="26" height="26" alt=""><span>Wool</span></th><th scope="col"><img src="grain.svg" width="26" height="26" alt=""><span>Grain</span></th><th scope="col"><img src="ore.svg" width="26" height="26" alt=""><span>Ore</span></th></tr></thead><tbody><tr id="opponent"></tr><tr id="bank"></tr></tbody></table>
         <p class="hidden-cards"><span>Oversized Pig’s Development Cards</span><span><b id="opponent-dev">0</b> Hidden</span></p>

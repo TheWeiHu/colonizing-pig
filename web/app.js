@@ -8,7 +8,7 @@ const LAND = [[0,-2],[1,-2],[2,-2],[2,-1],[2,0],[1,1],[0,2],[-1,2],[-2,2],[-2,1]
 const PAIRS = RES.flatMap((_, a) => RES.slice(a).map((_, b) => [a, a+b]));
 const SAVE_KEY = 'colonizing-pig-v1-porto-ruling';
 let worker, generation = 0, request = 0, state = null, busy = true, ready = false, paused = false;
-let mode = '', startTime = 0, timer = null, loadTimer = null, restoreOnReady = null, forcedSingle = false, log = [];
+let mode = '', startTime = 0, timer = null, loadTimer = null, restoreOnReady = null, forcedSingle = false, log = [], homeSave = null;
 window.pigDiagnostics = {timings: [], workers: 0};
 
 function readSave() {
@@ -19,12 +19,14 @@ function readSave() {
     return save;
   } catch { $('load-status').textContent = 'The saved game could not be read. You can start a new one.'; return null; }
 }
-function persist() {
-  if (!state) return;
+function persist(extra = {}) {
+  if (!state) return null;
+  const save = {version:1, seed:state.seed, human:state.human, history:state.history, paused, log:log.slice(0,40), ...extra};
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify({version:1, seed:state.seed, human:state.human, history:state.history, paused, log:log.slice(0,40)}));
+    localStorage.setItem(SAVE_KEY, JSON.stringify(save));
     $('save-status').textContent = 'Saved On This Device';
   } catch { $('save-status').textContent = 'Storage Unavailable · Use Save File'; }
+  return save;
 }
 function send(type, data = {}) { worker.postMessage({id:++request, type, ...data}); }
 function stopTimer() { clearInterval(timer); timer = null; $('game').classList.remove('thinking'); }
@@ -41,6 +43,8 @@ function boot(saved = null) {
   worker?.terminate(); clearTimeout(loadTimer); const epoch = ++generation;
   ready = false; busy = true; stopTimer(); restoreOnReady = saved;
   $('start').disabled = true; $('start').textContent = 'Loading Model…';
+  $('resume-game').hidden = !homeSave; $('resume-game').disabled = true;
+  $('start').classList.toggle('primary', !homeSave);
   $('load-status').textContent = 'Getting Oversized Pig Ready…';
   $('error').hidden = true;
   const threaded = !forcedSingle && self.crossOriginIsolated && typeof SharedArrayBuffer !== 'undefined';
@@ -60,15 +64,16 @@ function boot(saved = null) {
     if (data.type === 'ready') {
       clearTimeout(loadTimer);
       ready = true; window.pigDiagnostics.workers = data.workers;
-      $('start').disabled = false; $('start').textContent = 'Play';
-      $('load-status').textContent = 'Starting order is drawn automatically.';
+      $('start').disabled = false; $('start').textContent = homeSave ? 'New Game' : 'Play';
+      $('resume-game').disabled = false;
+      $('load-status').textContent = homeSave ? 'Continue where you left off, or start a new island.' : 'Starting order is drawn automatically.';
       if (restoreOnReady) {
         log = Array.isArray(saved.log) ? saved.log.filter(x => typeof x === 'string').slice(0,40) : [];
         paused = Boolean(saved.paused);
         send('restore', saved);
       } else busy = false;
     } else if (data.type === 'state') {
-      stopTimer(); busy = false; state = data.state;
+      stopTimer(); busy = false; state = data.state; homeSave = null;
       window.pigDiagnostics.lastState = state;
       if (data.elapsed !== undefined) {
         window.pigDiagnostics.timings.push({phase:state.phase, ms:data.elapsed});
@@ -253,10 +258,26 @@ function appendEvents(events) {
   }
   log=log.slice(0,40);
 }
-$('start-form').onsubmit=e=>{
-  e.preventDefault();if(!ready)return;
+function startGame() {
+  if(!ready||busy)return;
+  $('start').disabled=true;
   const [seed, draw]=crypto.getRandomValues(new Uint32Array(2));
   log=[];paused=false;busy=true;send('new',{seed,human:draw & 1});
+}
+$('start-form').onsubmit=e=>{
+  e.preventDefault();if(!ready)return;
+  if(homeSave){$('new-dialog').showModal();return;}
+  startGame();
+};
+$('exit-game').onclick=()=>{
+  if(!state)return;
+  paused=true;homeSave=persist({exited:true});
+  state=null;$('game').hidden=true;$('welcome').hidden=false;
+  boot();window.scrollTo(0,0);
+};
+$('resume-game').onclick=()=>{
+  if(!homeSave)return;
+  const saved=homeSave;homeSave=null;boot({...saved,paused:false});
 };
 $('pause').onclick=()=>{
   if(!state||state.done)return;
@@ -271,6 +292,7 @@ $('zoom').onclick=()=>{
 $('new-game').onclick=()=>$('new-dialog').showModal();
 $('new-dialog').onclose=()=>{
   if($('new-dialog').returnValue!=='new')return;
+  if(homeSave){homeSave=null;startGame();return;}
   state=null;log=[];paused=false;try{localStorage.removeItem(SAVE_KEY);}catch{}
   $('game').hidden=true;$('welcome').hidden=false;boot();
 };
@@ -292,5 +314,7 @@ $('load-file').onchange=async()=>{
   }catch(error){fail(error.message);}
 };
 $('retry').onclick=()=>{forcedSingle=true;boot(readSave());};
-$('discard-save').onclick=()=>{try{localStorage.removeItem(SAVE_KEY);}catch{}state=null;log=[];paused=false;$('game').hidden=true;$('welcome').hidden=false;boot();};
-boot(readSave());
+$('discard-save').onclick=()=>{homeSave=null;try{localStorage.removeItem(SAVE_KEY);}catch{}state=null;log=[];paused=false;$('game').hidden=true;$('welcome').hidden=false;boot();};
+const previous=readSave();
+homeSave=previous?.exited ? previous : null;
+boot(homeSave ? null : previous);
